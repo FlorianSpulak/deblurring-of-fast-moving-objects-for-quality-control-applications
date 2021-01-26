@@ -1,10 +1,31 @@
-clearvars;
-workspace;
-close all;
+%% USER INPUT
+
+cam_param = 0.7;
+% Represents the ratio "how much" the camera blurres the image. This is
+% used to control how much the speed of an object impacts the length of the
+% PSFs.
+
+noise_var = 0.0080;
+% The variance of the noise. Used to estimate the NSR of the iamges.
+
+data_to_display = 1;
+% 1: final output
+% 2: objects original and deblurred + corresponding PSFs
+% 3: segmentation and tracking information visualized
+
+video_name = 's1.AVI';
+% The filename of the video to precess.
+
+skip_frames = 25;
+% Frames of the beginning of the video to skip.
+
+
+%% ALGORITHM
+
 iptsetpref('ImshowBorder','tight');
 
-VID = VideoReader('s1.AVI');
-for skip = 1:25
+VID = VideoReader(video_name);
+for skip = 1:skip_frames
     readFrame(VID);
 end
 
@@ -12,15 +33,7 @@ non_black = 0;
 centroids_old = 0;
 numObj_old = 0;
 
-% user input:
-cam_param = 0.7;
-% 1: final output
-% 2: objects original and deblurred + corresponding PSFs
-% 3: segmentation and tracking information visualized
-data_to_display = 1;
-
 frame_nr = 1;
-result = struct('frame', 100);
 
 while(hasFrame(VID))
     
@@ -126,7 +139,7 @@ while(hasFrame(VID))
             sizePSF = size(objects(i).PSF);
             if (sizeBLB(1) > sizePSF(1) && sizeBLB(2) > sizePSF(2))
                 Id = im2double(objects(i).blob);
-                SNR = 0.0080 / var(Id(:));
+                SNR = noise_var / var(Id(:)); % noise variance / image variance
                 objects(i).debl = deconvwnr(objects(i).blob, objects(i).PSF, SNR);
             end
         end
